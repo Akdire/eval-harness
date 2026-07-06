@@ -38,5 +38,12 @@ if __name__ == "__main__": main()
 
 
 """
-Make a tiny cases.json (2–3 cases) and run it for real: python -m eval_harness cases.json --grader exact. Paste what it prints. This is the moment the whole thing runs as a tool for the first time.
+1)One sentence: what is this project? (Resist listing features. Say what it does and for whom. "A small, focused Python library for evaluating AI system outputs against expected results, with pluggable graders." — something like that, in your words.)
+
+2) The "why it exists" paragraph (2–3 sentences): what problem does it solve, why would a developer reach for it instead of writing their own? Your "small but important, install-don't-rebuild" framing goes here.
+
+3) A "quick start" code block: the minimal import-and-use example — a developer imports run_eval, defines their system, picks a grader, runs it. Write the ~6 lines a user would copy.
+
+Answer: ti
+
 """

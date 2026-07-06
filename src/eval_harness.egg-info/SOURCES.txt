@@ -1,6 +1,7 @@
 pyproject.toml
 src/whisper.py
 src/eval_harness/__init__.py
+src/eval_harness/__main__.py
 src/eval_harness/cli.py
 src/eval_harness/graders.py
 src/eval_harness/models.py
