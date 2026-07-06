@@ -1,5 +1,5 @@
-from src.eval_harness.models import EvalCase, ResultStatus, EvalResult
-from src.eval_harness.reporting import summarize
+from eval_harness.models import EvalCase, ResultStatus, EvalResult
+from eval_harness.reporting import summarize
 
 
 def test_summarize():

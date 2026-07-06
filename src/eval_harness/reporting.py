@@ -1,4 +1,4 @@
-from src.eval_harness.models import EvalResult, ResultStatus
+from eval_harness.models import EvalResult, ResultStatus
 
 def summarize(results: list[EvalResult]) -> dict:
 
@@ -15,4 +15,4 @@ def summarize(results: list[EvalResult]) -> dict:
         elif result.status == ResultStatus.ERROR:
             errored += 1
 
-    return {"total": total, "passed": passed, "failed": failed, "errored": errored, "pass_rate": passed / total if total > 0 else 0.0}
+    return {"total": total, "passed": passed, "failed": failed, "errored": errored, "pass_rate": round(passed / total, 2) if total > 0 else 0.0}

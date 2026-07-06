@@ -1,4 +1,4 @@
-from src.eval_harness.models import EvalCase, EvalResult, ResultStatus
+from eval_harness.models import EvalCase, EvalResult, ResultStatus
     
 def run_eval(cases: list[EvalCase], system: callable, grader:callable) -> list[EvalResult]:
     case_results = []

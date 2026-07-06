@@ -1,6 +1,6 @@
-from src.eval_harness.runner import run_eval
-from src.eval_harness.models import EvalCase, ResultStatus
-from src.eval_harness.graders import exact_match
+from eval_harness.runner import run_eval
+from eval_harness.models import EvalCase, ResultStatus
+from eval_harness.graders import exact_match
 
 def fake_system(text):
     return "4"

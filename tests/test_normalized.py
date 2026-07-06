@@ -1,4 +1,4 @@
-from src.eval_harness.graders import normalized_match
+from eval_harness.graders import normalized_match
 
 
 def test_normalized_match_returns_true_with_identical_strings():
