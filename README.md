@@ -1,5 +1,7 @@
 # eval-harness
 
+![tests](https://github.com/Akdire/eval-harness/actions/workflows/tests.yml/badge.svg)
+
 A small, focused Python library for running structured evaluations of AI system
 outputs against expected results, using pluggable graders — aimed at developers
 who need a lightweight, ready-to-use eval loop.
