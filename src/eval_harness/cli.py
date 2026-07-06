@@ -44,6 +44,25 @@ if __name__ == "__main__": main()
 
 3) A "quick start" code block: the minimal import-and-use example — a developer imports run_eval, defines their system, picks a grader, runs it. Write the ~6 lines a user would copy.
 
-Answer: ti
+Answer:1) this project is A small, focused Python library for running structured evaluations of AI system outputs against expected results, using pluggable graders — aimed at developers who need a lightweight, ready-to-use eval loop.
+
+2) Writing a reliable eval loop from scratch is boilerplate most developers repeat — load cases, call a system, compare outputs, aggregate stats, save results. eval-harness packages that loop into a composable, install-ready library with validated I/O, structured result types, and three grading strategies out of the box. Reach for it when you want to focus on your system under test, not the scaffolding around it.
+
+3) from eval_harness.storage import load_cases, save_results
+from eval_harness.runner import run_eval
+from eval_harness.reporting import summarize
+from eval_harness.graders import normalized_match
+
+def my_system(text: str) -> str:
+    return call_your_model_here(text)  # replace with your real system
+
+cases = load_cases("cases.json")
+results = run_eval(cases, my_system, normalized_match)
+summary = summarize(results)
+save_results(results, "results.json", summary)
+print(f"Pass rate: {summary['pass_rate'] * 100:.1f}%")
+
+
+
 
 """

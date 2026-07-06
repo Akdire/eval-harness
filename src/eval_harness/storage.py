@@ -2,9 +2,12 @@ import json
 from eval_harness.models import EvalCase, EvalResult
 
 
-def save_results(results: list[EvalResult], path: str, summary: dict) -> None:
+def save_results(results: list[EvalResult], path: str, summary: dict | None = None) -> None:
     with open(path, "w") as f:
-        json.dump({"summary": summary, "results": [r.to_dict() for r in results]}, f, indent=2)
+        data = {"results": [r.to_dict() for r in results]}
+        if summary is not None:
+            data["summary"] = summary
+        json.dump(data, f, indent=2)
 
 def load_cases(path: str) -> list[EvalCase]:
     try:
