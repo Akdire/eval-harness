@@ -1,6 +1,6 @@
 # eval-harness
 
-![tests](https://github.com/Akdire/eval-harness/actions/workflows/tests.yml/badge.svg)
+![tests](https://github.com/Akdire/eval-harness/actions/workflows/tests.yml/badge.svg) [![PyPI](https://img.shields.io/pypi/v/eval-harness-lite)](https://pypi.org/project/eval-harness-lite/)
 
 A small, focused Python library for running structured evaluations of AI system
 outputs against expected results, using pluggable graders — aimed at developers
@@ -18,10 +18,14 @@ scaffolding around it.
 ## Install
 
 ```bash
-pip install -e .
+pip install eval-harness-lite
 ```
 
-Requires Python 3.9+.
+Requires Python 3.9+. Zero dependencies.
+
+```python
+from eval_harness import run_eval  # note: import name is eval_harness
+```
 
 ## Quick start
 
