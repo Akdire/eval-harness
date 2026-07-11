@@ -6,5 +6,7 @@ __pycache__/
 results.json
 *.egg-info/
 .DS_Store
-
+_reference/
 dist/
+src/evals/tools/
+nocola/
