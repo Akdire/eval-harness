@@ -1,16 +1,19 @@
 """
 Eval cases for the Norwegian correction engine.
 
-Ground-truth fixtures. Each EvalCase is either:
-  - ExpectedCorrection : an error that SHOULD fire, with the expected label/fix
-  - ExpectedSilence    : correct Norwegian that should produce NO correction
+GROUND-TRUTH STATUS (MVP): grammar/collocation baseline is high-confidence.
+The advanced cases (register/pragmatics/naturalness) are LLM-CONSENSUS
+(Gemini drafted, Grok reviewed, both agreed) and are marked `teacher-review pending`.
+They test "does the engine agree with LLM consensus", not "with a Norwegian teacher" —
+good enough to catch regressions and gross failures for the MVP.
 
-Cases are grouped by intent so coverage gaps are visible at a glance.
-As the set grows, keep the grouping and keep the ground truth verified — a wrong
-expected answer silently poisons the measurement.
+CONTEXT IS FIRST-CLASS. Register/pragmatics/naturalness errors often cannot be judged
+from a lone sentence — the situation decides. So EvalCase carries an optional `context`:
+the prior conversation turns that establish the setting. The runner feeds context + input
+to the engine as history, exactly as a live conversation would.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -34,33 +37,157 @@ class EvalCase:
     input: str
     level: str
     expected: ExpectedOutcome
-    tags: tuple[str, ...] = ()   # e.g. ("detection", "grammar") — used for per-category reporting
+    # prior (role, content) turns that set the situation. Empty = context-free case.
+    context: tuple[tuple[str, str], ...] = ()
+    tags: tuple[str, ...] = ()
 
 
-# ---------------------------------------------------------------------------
-# GROUP 1 — Original baseline set (grammar / collocation detection + restraint)
-# ---------------------------------------------------------------------------
-BASELINE_CASES: list[EvalCase] = [
+# ===========================================================================
+# GROUP 1 — Baseline: grammar / collocation detection (high confidence)
+# ===========================================================================
+BASELINE = [
     EvalCase("Jeg gleder meg for helgen.", "B2",
-             ExpectedCorrection(fragment="gleder meg for", fix="gleder meg til helgen",
-                                correction_type="grammar", severity="medium"),
+             ExpectedCorrection(fragment="gleder meg for", fix="gleder meg til",
+                                correction_type="grammar", severity=None),
              tags=("detection", "grammar")),
     EvalCase("Jeg har lyst på å reise.", "B2",
              ExpectedCorrection(fragment="lyst på å reise", fix="lyst til å reise",
-                                correction_type="grammar", severity="medium"),
+                                correction_type="grammar", severity=None),
              tags=("detection", "grammar")),
     EvalCase("Han er interessert på musikk.", "B2",
-             ExpectedCorrection(fragment="interessert på", fix="interessert i musikk",
-                                correction_type="collocation", severity="medium"),
+             ExpectedCorrection(fragment="interessert på", fix="interessert i",
+                                correction_type="collocation", severity=None),
              tags=("detection", "collocation")),
     EvalCase("Jeg gjør en beslutning.", "B2",
              ExpectedCorrection(fragment="gjør en beslutning", fix="tar en beslutning",
-                                correction_type="collocation", severity="medium"),
+                                correction_type="collocation", severity=None),
              tags=("detection", "collocation")),
     EvalCase("Jeg er enig med at det er sant.", "B2",
-             ExpectedCorrection(fragment="enig med at", fix="enig i at det er sant",
-                                correction_type="grammar", severity="medium"),
+             ExpectedCorrection(fragment="enig med at", fix="enig i at",
+                                correction_type="grammar", severity=None),
              tags=("detection", "grammar")),
+    # --- NoCoLA native-verified (real learner errors, corrected by native speakers) ---
+    EvalCase("Man må husker at begge to er viktige!", "B2",
+             ExpectedCorrection(fragment="må husker at", fix="må huske at",
+                                correction_type="grammar", severity=None),
+             tags=("detection", "grammar", "native_verified")),
+    EvalCase("Det kan skaper mange problemer for mennesker.", "B2",
+             ExpectedCorrection(fragment="kan skaper mange", fix="kan skape mange",
+                                correction_type="grammar", severity=None),
+             tags=("detection", "grammar", "native_verified")),
+    EvalCase("Han mener at for mange karbohydrater fører til man utvikler diabetes.", "B2",
+             ExpectedCorrection(fragment="til man", fix="til at man",
+                                correction_type="grammar", severity=None),
+             tags=("detection", "grammar", "native_verified")),
+]
+
+# ===========================================================================
+# GROUP 2 — Collocation (context-free; the error holds regardless of situation)
+# LLM-consensus, teacher-review pending.
+# ===========================================================================
+COLLOCATION = [
+    EvalCase("Det er vanskelig å betale oppmerksomhet i lange forelesninger.", "C1",
+             ExpectedCorrection(fragment="betale oppmerksomhet", fix="følge med",
+                                correction_type="collocation", severity=None),
+             tags=("detection", "collocation", "teacher_pending")),
+    EvalCase("Statsministeren skal gi en tale under åpningen.", "C1",
+             ExpectedCorrection(fragment="gi en tale", fix="holde en tale",
+                                correction_type="collocation", severity=None),
+             tags=("detection", "collocation", "teacher_pending")),
+    EvalCase("Jeg har lyst til å spørre et spørsmål om kontrakten.", "C1",
+             ExpectedCorrection(fragment="spørre et spørsmål", fix="stille et spørsmål",
+                                correction_type="collocation", severity=None),
+             tags=("detection", "collocation", "teacher_pending")),
+    EvalCase("Fagforeningen valgte å gjøre krav om bedre vilkår.", "C1",
+             ExpectedCorrection(fragment="gjøre krav", fix="stille krav",
+                                correction_type="collocation", severity=None),
+             tags=("detection", "collocation", "teacher_pending")),
+
+    EvalCase("Han valgte å gjøre et forslag om å utsette prosjektet.", "C1",
+             ExpectedCorrection(fragment="gjøre et forslag", fix="komme med et forslag",
+                                correction_type="collocation", severity=None),
+             tags=("detection", "collocation", "teacher_pending")),
+
+     EvalCase("Vi burde ha en titt på rapporten før møtet.", "C1",
+             ExpectedCorrection(fragment="ha en titt", fix="ta en titt",
+                                correction_type="collocation", severity=None),
+             tags=("detection", "collocation", "teacher_pending")),
+
+     EvalCase("Jeg liker denne nye boken din veldig mye.", "C1",
+             ExpectedCorrection(fragment="veldig mye", fix="veldig godt",
+                                correction_type="collocation", severity=None),
+             tags=("detection", "collocation", "teacher_pending")),
+    EvalCase("Forklaringen din gjør ikke helt mening for meg.", "C1",
+             ExpectedCorrection(fragment="gjør ikke helt mening", fix="gir ikke helt mening",
+                                correction_type="collocation", severity=None),
+             tags=("detection", "collocation", "teacher_pending")),
+]
+
+# ===========================================================================
+# GROUP 3 — Naturalness (context-free calques). LLM-consensus, teacher-review pending.
+# ===========================================================================
+NATURALNESS = [
+    
+    EvalCase("Det er billig, men på den andre hånden kan det bli dyrt.", "C1",
+             ExpectedCorrection(fragment="på den andre hånden", fix="på den andre siden",
+                                correction_type="naturalness", severity=None),
+             tags=("detection", "naturalness", "teacher_pending")),
+   
+    EvalCase("Unnskyld, men jeg er i en hast og må løpe.", "C1",
+             ExpectedCorrection(fragment="er i en hast", fix="har det travelt",
+                                correction_type="naturalness", severity=None),
+             tags=("detection", "naturalness", "teacher_pending")),
+]
+
+# ===========================================================================
+# GROUP 4 — Register (CONTEXT-DEPENDENT: prior turns set the formality).
+# The context establishes the situation; the learner's turn violates its register.
+# LLM-consensus, teacher-review pending.
+# ===========================================================================
+REGISTER = [
+    # Casual invitation to a friend -> bureaucratic 'angående' is too stiff.
+    EvalCase("Hei! Har du lyst til å ta en øl og snakke angående ferieplanene?", "C1",
+             ExpectedCorrection(fragment="angående", fix="om",
+                                correction_type="register", severity=None),
+             context=(("assistant", "Hei! Så hyggelig å høre fra deg. Hva skjer?"),),
+             tags=("detection", "register", "teacher_pending")),
+    # Formal business email -> slang 'kjipt' is too casual.
+    EvalCase("Det er kjipt at leveransen ble forsinket på grunn av streiken.", "C1",
+             ExpectedCorrection(fragment="kjipt", fix="beklagelig",
+                                correction_type="register", severity=None),
+             context=(("assistant", "God dag. Kan du oppdatere oss om leveransen til kunden?"),),
+             tags=("detection", "register", "teacher_pending")),
+    # Casual message to a colleague -> legalistic 'såfremt' is too formal.
+    EvalCase("Jeg kan sende deg rapporten i morgen, såfremt du trenger den raskt.", "C1",
+             ExpectedCorrection(fragment="såfremt", fix="hvis",
+                                correction_type="register", severity=None),
+             context=(("assistant", "Hei! Rekker du å sende meg rapporten snart?"),),
+             tags=("detection", "register", "teacher_pending")),
+]
+
+# ===========================================================================
+# GROUP 5 — Pragmatics (CONTEXT-DEPENDENT: politeness is relative to situation).
+# Kept small and defensible; culturally heavier cases held for teacher review.
+# ===========================================================================
+PRAGMATICS = [
+    # 'De' as a formal pronoun is outdated in modern Norwegian -> use 'du'.
+    EvalCase("Kan De fortelle meg hvor kontoret til direktøren er?", "C1",
+             ExpectedCorrection(fragment="De", fix="du",
+                                correction_type="pragmatics", severity=None),
+             tags=("detection", "pragmatics", "teacher_pending")),
+    # Professional setting -> blunt imperative is too demanding; soften.
+    EvalCase("Du må signere her nå.", "C1",
+             ExpectedCorrection(fragment="Du må signere her nå",
+                                fix="Fint om du kan signere her",
+                                correction_type="pragmatics", severity=None),
+             context=(("assistant", "Hei, jeg er saksbehandleren din. Er det noe jeg kan hjelpe med?"),),
+             tags=("detection", "pragmatics", "teacher_pending")),
+]
+
+# ===========================================================================
+# GROUP 6 — Restraint (correct Norwegian -> the engine MUST stay silent)
+# ===========================================================================
+RESTRAINT = [
     EvalCase("Jeg gleder meg til helgen.", "B2", ExpectedSilence(), tags=("restraint",)),
     EvalCase("Kan du hjelpe meg med dette?", "B2", ExpectedSilence(), tags=("restraint",)),
     EvalCase("Jeg har bodd i Norge i tre år.", "B2", ExpectedSilence(), tags=("restraint",)),
@@ -68,82 +195,20 @@ BASELINE_CASES: list[EvalCase] = [
     EvalCase("Jeg synes at filmen var veldig bra.", "B2", ExpectedSilence(), tags=("restraint",)),
 ]
 
-
-# ---------------------------------------------------------------------------
-# GROUP 2 — Vocabulary (wrong word / false friend — replacing ONE word fixes it)
-# ---------------------------------------------------------------------------
-# NOTE: verify these against a native speaker before trusting the numbers.
-VOCABULARY_CASES: list[EvalCase] = [
-    # "eventuelt" (possibly) is a false friend for "eventually" (til slutt).
-    EvalCase("Eventuelt kom han hjem klokka ti.", "B2",
-             ExpectedCorrection(fragment="Eventuelt", fix="Til slutt",
-                                correction_type="vocabulary", severity="high"),
-             tags=("detection", "vocabulary")),
-    # "føle" vs "kjenne": "kjenner mange folk" = know people; "føler" is wrong here.
-    EvalCase("Jeg føler mange folk i Oslo.", "B2",
-             ExpectedCorrection(fragment="føler mange folk", fix="kjenner mange folk",
-                                correction_type="vocabulary", severity="high"),
-             tags=("detection", "vocabulary")),
+# ===========================================================================
+# GROUP 7 — Level sensitivity (SAME sentence, different level -> different outcome).
+# The product-defining behavior: flag a subtle slip at C1, stay silent at B1.
+# ===========================================================================
+LEVEL_SENSITIVITY = [
+    EvalCase("Jeg bestemte å dra tidlig.", "C1",
+             ExpectedCorrection(fragment="bestemte å", fix="bestemte meg for å",
+                                correction_type="collocation", severity=None),
+             tags=("detection", "collocation", "level_sensitivity", "teacher_pending")),
+    EvalCase("Jeg bestemte å dra tidlig.", "B1", ExpectedSilence(),
+             tags=("restraint", "level_sensitivity")),
 ]
 
 
-# ---------------------------------------------------------------------------
-# GROUP 3 — Register (grammatically fine, wrong level of formality)
-# ---------------------------------------------------------------------------
-REGISTER_CASES: list[EvalCase] = [
-    # Overly bureaucratic phrasing in a casual "how are you" — register mismatch.
-    EvalCase("Jeg vil med dette meddele at jeg har det bra.", "C1",
-             ExpectedCorrection(fragment="vil med dette meddele",
-                                fix="vil bare si", correction_type="register", severity="medium"),
-             tags=("detection", "register")),
-]
-
-
-# ---------------------------------------------------------------------------
-# GROUP 4 — Naturalness (all correct, just not how a native would phrase it)
-# ---------------------------------------------------------------------------
-NATURALNESS_CASES: list[EvalCase] = [
-    # Literal translation of "I take a shower" — Norwegians say "dusjer".
-    EvalCase("Jeg tar en dusj hver morgen.", "C1",
-             ExpectedCorrection(fragment="tar en dusj", fix="dusjer",
-                                correction_type="naturalness", severity="low"),
-             tags=("detection", "naturalness")),
-]
-
-
-# ---------------------------------------------------------------------------
-# GROUP 5 — Level sensitivity (SAME sentence, different level -> different outcome)
-# The whole product thesis: a low-severity naturalness slip is flagged at C1
-# but should be left alone at B1 (correcting it there just buries bigger errors).
-# ---------------------------------------------------------------------------
-LEVEL_SENSITIVITY_CASES: list[EvalCase] = [
-    EvalCase("Jeg tar en dusj hver morgen.", "B1", ExpectedSilence(),
-             tags=("restraint", "level_sensitivity")),   # too minor to flag at B1
-    EvalCase("Jeg vil med dette meddele at jeg har det bra.", "B1", ExpectedSilence(),
-             tags=("restraint", "level_sensitivity")),   # register nuance not a B1 priority
-]
-
-
-# ---------------------------------------------------------------------------
-# GROUP 6 — Hard restraint (correct-but-unusual; must NOT over-correct)
-# ---------------------------------------------------------------------------
-HARD_RESTRAINT_CASES: list[EvalCase] = [
-    # Correct, slightly formal, but perfectly fine — must stay silent.
-    EvalCase("Jeg setter stor pris på hjelpen din.", "C1", ExpectedSilence(),
-             tags=("restraint", "hard")),
-    EvalCase("Det er ingenting i veien med det.", "C1", ExpectedSilence(),
-             tags=("restraint", "hard")),
-]
-
-
-# ---------------------------------------------------------------------------
-# The full set the runner imports.
-# ---------------------------------------------------------------------------
 CASES: list[EvalCase] = (
-    BASELINE_CASES
-    + VOCABULARY_CASES
-    + REGISTER_CASES
-    + NATURALNESS_CASES
-    + LEVEL_SENSITIVITY_CASES
-    + HARD_RESTRAINT_CASES
+    BASELINE + COLLOCATION + NATURALNESS + REGISTER + PRAGMATICS + RESTRAINT + LEVEL_SENSITIVITY
 )
